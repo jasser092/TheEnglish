@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متعلم الإنجليزية</title>
+    
+    <!-- PWA Basics -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 22px;
+            margin-bottom: 5px;
+        }
+        
+        .english-word {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 3px solid #3498db;
+            text-align: center;
+            position: relative;
+        }
+        
+        .english-word h2 {
+            font-size: 28px;
+            color: #000000;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .speaker-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .option-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .option-btn:hover {
+            background: #2980b9;
+        }
+        
+        .option-btn.correct {
+            background: #27ae60;
+        }
+        
+        .option-btn.wrong {
+            background: #e74c3c;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            background: #9b59b6;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .control-btn.exit-btn {
+            background: #e74c3c;
+        }
+        
+        .stats {
+            padding: 10px;
+            background: #ecf0f1;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .message {
+            padding: 8px;
+            margin: 8px 0;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .message.correct {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .message.wrong {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 متعلم الإنجليزية</h1>
+            <p>اختر الترجمة الصحيحة</p>
+        </div>
+
+        <div id="message" class="message" style="display: none;"></div>
+
+        <div class="english-word">
+            <h2 id="englishWord">Book</h2>
+            <button class="speaker-btn" onclick="speakCurrentWord()">🔊</button>
+        </div>
+
+        <div class="options">
+            <button class="option-btn" onclick="checkAnswer(0)">كتاب</button>
+            <button class="option-btn" onclick="checkAnswer(1)">قلم</button>
+            <button class="option-btn" onclick="checkAnswer(2)">مدرسة</button>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn" onclick="showAddWords()">إضافة كلمات</button>
+            <button class="control-btn" onclick="skipWord()">تخطي</button>
+            <button class="control-btn exit-btn" onclick="showStats()">إحصائيات</button>
+        </div>
+
+        <div class="stats" id="stats">
+            الكلمات: 6 | الصحيحة: 0
+        </div>
+    </div>
+
+    <script>
+        // الكلمات الأساسية
+        let words = [
+            { english: "Book", correct: "كتاب", wrong1: "قلم", wrong2: "مدرسة" },
+            { english: "She", correct: "هي", wrong1: "هو", wrong2: "هم" },
+            { english: "Red", correct: "أحمر", wrong1: "أزرق", wrong2: "أخضر" },
+            { english: "House", correct: "منزل", wrong1: "سيارة", wrong2: "شجرة" },
+            { english: "Water", correct: "ماء", wrong1: "نار", wrong2: "هواء" },
+            { english: "Cat", correct: "قطة", wrong1: "كلب", wrong2: "طائر" }
+        ];
+
+        let currentIndex = 0;
+        let correctCount = 0;
+        let sessionTotal = 0;
+        let sessionCorrect = 0;
+
+        // بدء التطبيق
+        function init() {
+            loadProgress();
+            showWord();
+            
+            // تسجيل Service Worker
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(function(registration) {
+                            console.log('Service Worker registered with scope: ', registration.scope);
+                        })
+                        .catch(function(error) {
+                            console.log('Service Worker registration failed: ', error);
+                        });
+                });
+            }
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem('englishProgress');
+            if (saved) {
+                correctCount = parseInt(saved) || 0;
+            }
+            updateStats();
+        }
+
+        function saveProgress() {
+            localStorage.setItem('englishProgress', correctCount.toString());
+        }
+
+        function showWord() {
+            const word = words[currentIndex];
+            document.getElementById('englishWord').textContent = word.english;
+            
+            const options = document.querySelectorAll('.option-btn');
+            const allOptions = [word.correct, word.wrong1, word.wrong2];
+            
+            // خلط الخيارات
+            for (let i = allOptions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allOptions[i], allOptions[j]] = [allOptions[j], allOptions[i]];
+            }
+            
+            options.forEach((btn, index) => {
+                btn.textContent = allOptions[index];
+                btn.className = 'option-btn';
+                btn.disabled = false;
+            });
+            
+            document.getElementById('message').style.display = 'none';
+            
+            // نطق الكلمة
+            setTimeout(speakCurrentWord, 300);
+        }
+
+        function speakCurrentWord() {
+            const word = document.getElementById('englishWord').textContent;
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'en-US';
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        function checkAnswer(selectedIndex) {
+            const word = words[currentIndex];
+            const options = document.querySelectorAll('.option-btn');
+            const selectedText = options[selectedIndex].textContent;
+            const messageElement = document.getElementById('message');
+            
+            sessionTotal++;
+
+            if (selectedText === word.correct) {
+                // إجابة صحيحة
+                options.forEach(btn => {
+                    btn.disabled = true;
+                    if (btn.textContent === word.correct) {
+                        btn.classList.add('correct');
+                    }
+                });
+                
+                correctCount++;
+                sessionCorrect++;
+                saveProgress();
+                
+                messageElement.textContent = 'إجابة صحيحة! ✓';
+                messageElement.className = 'message correct';
+                messageElement.style.display = 'block';
+                
+                setTimeout(() => {
+                    nextWord();
+                }, 1000);
+                
+            } else {
+                // إجابة خاطئة
+                options.forEach(btn => {
+                    if (btn.textContent === selectedText) {
+                        btn.classList.add('wrong');
+                    }
+                });
+                
+                messageElement.textContent = 'إجابة خاطئة! جرب مرة أخرى';
+                messageElement.className = 'message wrong';
+                messageElement.style.display = 'block';
+                
+                setTimeout(() => {
+                    showWord();
+                }, 1500);
+            }
+            
+            updateStats();
+        }
+
+        function nextWord() {
+            currentIndex = (currentIndex + 1) % words.length;
+            showWord();
+        }
+
+        function skipWord() {
+            nextWord();
+        }
+
+        function showAddWords() {
+            const english = prompt('الكلمة الإنجليزية:');
+            const arabic = prompt('الترجمة الصحيحة:');
+            if (english && arabic) {
+                words.push({
+                    english: english,
+                    correct: arabic,
+                    wrong1: 'كبير',
+                    wrong2: 'صغير'
+                });
+                updateStats();
+                alert('تمت الإضافة!');
+            }
+        }
+
+        function showStats() {
+            const percentage = sessionTotal > 0 ? Math.round((sessionCorrect / sessionTotal) * 100) : 0;
+            alert(`إحصائيات الجلسة:
+الأسئلة: ${sessionTotal}
+الصحيحة: ${sessionCorrect}
+النسبة: ${percentage}%`);
+        }
+
+        function updateStats() {
+            document.getElementById('stats').textContent = 
+                `الكلمات: ${words.length} | الصحيحة: ${correctCount}`;
+        }
+
+        // بدء التطبيق
+        window.onload = init;
+    </script>
+</body>
+</html>
